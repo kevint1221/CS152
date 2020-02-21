@@ -37,7 +37,7 @@ FILE * yyin;
 
 
 /* TOKENS */
-ident:         IDENT        { printf( "Ident -> IDENT (%s)\n",$1); };
+ident:         IDENT        { printf( "ident -> IDENT (%s)\n",$1); };
 number:        NUMBER        { printf( "number -> NUMBER (%d)\n",$1);};
 
 
@@ -46,110 +46,150 @@ number:        NUMBER        { printf( "number -> NUMBER (%d)\n",$1);};
 
 stprogram:        program ident SEMICOLON block end_program { printf( "stprogram -> program ident SEMICOLON block end_program \n"); };
 
-Program:        Function { printf( "Program -> Function \n"); };
+//program
+Program:        Function {printf("Program -> Function\n"); }
+        |       Function Program {printf("Program -> Function Program\n");}
+        |       %empty {printf("Program -> epsilon\n");};
 
-Function:       FUNCTION ident SEMICOLON BEGIN_PARAMS Declar_Block
+//function
+Function:       FUNCTION ident SEMICOLON BEGIN_PARAMS Declar_Block END_PARAMS BEGIN_LOCALS Declaration_Block END_LOCALS BEGIN_BODY Statement_Block {printf("FUNCTION IDENT SEMICOLON BEGIN_PARAMS Declaration_Block END_PARAMS BEGIN_LOCALS Declaration_Block END_LOCALS BEGIN_BODY Statement_Block\n");};
 
-Declar_Block:   Declaration SEMICOLON {printf( "Declar_Bdeclaration SEMICOLON \n"); }
-        |       Declaration SEMICOLON Dec_Block {printf( "declaration SEMICOLON \n");}
-|       %empty {printf("")};
+//declaration block
+Declaration_Block:   Declaration SEMICOLON {printf("Declaration_Block -> declaration SEMICOLON \n");}
+        |       Declaration SEMICOLON Declaration_Block {printf("Declaration_Block -> declaration SEMICOLON Declaration_Block\n");}
+        |       %empty {printf("Declaration_Block -> epsilon\n");};
+
+//statement block
+Statement_Block:    Statement SEMICOLON {printf("Statement_Block -> Statement SEMICOLON\n");}
+        |       Statement SEMICOLON Statement_Block {printf("Statement_Block -> Statement SEMICOLON Statement_Block\n");};
+
+//declaration
+Declaration:    IDENT COMMA Declaration               {printf("declaration -> ident COMMA declaration\n");};
+        |       IDENT COLON Array_Block  INTEGER {printf("declaration -> ident COLON Array_Block INTEGER\n");};
+        
+//array block
+Array_Block: ARRAY L_PAREN number R_PAREN OF  {printf("Array_Block -> ARRAY L_PAREN number R_PAREN OF\n");}
+        |    %empty                           {printf("Array_Block -> epsilon\n");};
+
+//statement
+Statement:      Stament_Var    {printf("Statement -> Statement_Var\n");}
+        |       Statement_If     {printf("Statement -> Statement_If\n");}
+        |       Statement_While    {printf("Statement -> Statement_While\n");}
+        |       Statement_Do        {printf("Statement -> Statement_Do\n");}
+        |       Statement_For     {printf("Statement -> Statement_For\n");}      
+        |       Statement_Read    {printf("Statement -> Statement_Read\n");}
+        |       Statement_Write    {printf("Statement -> Sta_Write\n");}
+        |       Statement_Continue    {printf("Statement -> Statement_Continue\n");}
+        |       Statenent_Return     {printf("Statement -> Statement_Return\n");};
+
+
+//statement var
+Statement_Var:    Var ASSIGN Expression    {printf("Statement_Var -> Var ASSIGN Expression\n");};
+
+//statement if        
+Statement_If:         IF Bool_Exp THEN If_Statement_Block ENDIF {printf("StaIf -> IF bool_Exp THEN If_Statement_Block ENDIF\n");};
+
+//if statement block
+If_Statement_Block:     Statement SEMICOLON {printf("If_Statement_Block -> Statement SEMICOLON\n");}
+        |       Statement SEMICOLON If_Statement_Block {printf("If_Statement_Block -> Statement SEMICOLON If_Statement_Block\n");}
+        |       Statement SEMICOLON ELSE Statement_Block {printf("If_Statement_Block -> Statement SEMICOLON ELSE Statement_Block\n");};
+
+//statement while
+Statement_While:        WHILE Bool_Exp BEGINLOOP Statement_Block ENDLOOP {printf("Statement_While -> WHILE Bool_Exp BEGINLOOP Statement_Block ENDLOOP\n");};
+
+//statement do
+Statement_Do:         DO BEGINLOOP Statement_Block ENDLOOP WHILE Bool_Exp {printf("Statement_Do -> DO BEGINLOOP  Statement_Block ENDLOOP WHILE Bool_Exp\n");};
+
+//statement for
+Statement_For:          FOR Var ASSIGN number SEMICOLON  Bool_Exp SEMICOLON Var ASSIGN Expression BEGINLOOP Statement_Block ENDLOOP {printf("Statement_For -> FOR Var ASSIGN number SEMICOLON Bool_Exp SEMICOLON Var ASSIGN Expression BEGINLOOP Statement_Block ENDLOOP \n");};
+
+//statement read
+Statement_Read:        READ Var_Block         {printf("Statement_Read -> READ Var_Block\n");};
+
+//var block
+Var_Block:      Var COMMA {printf("Var_Block -> Var SEMICOLON\n");}
+        |       Var {printf("Var_Block -> Var\n");};
+
+//statement write
+Statement_Write:        WRITE Var_Block        {printf("Statement_Write -> WRITE Var_Block \n");};
+
+//statement continue
+Statement_Continue:        CONTINUE             {printf("Statement_Continue -> CONTINUE\n");};
+
+//statement return
+Statement_Return:       RETURN Expression {printf("Statement_Return -> RETURN Expression");};
+
+//boolean expression
+Bool_Exp:      Relation_And_Exp Or_Relation_And_Exp     {printf("Bool_Exp -> Relation_And_Exp Or_Relation_And_Exp\n"); }   
+
+//or relation and expression block
+Or_Relation_And_Exp_Block:        OR Relation_And_Exp Or_Relation_And_Exp_Block {printf("Or_Relation_Exp -> OR Relation_Exp Or_Relation_And_Exp_Block\n");}
+        |       %empty  {printf("Or_Relation_And_Exp_Block -> epsilon\n");};
+
+//relation and expression
+Relation_And_Exp:  Relation_Exp relation_and_exp AND relation_exp    { printf( "relation_and_exp -> relation_and_exp AND relation_exp\n");};
+
+//and relation block
+And_Relation_Block:     AND Relation_Exp And_Relation_Block {printf("And_Relation_Block -> AND Relation_Exp And_Relation_Block\n");}
+        |       %empty  {printf("And_Relation_Block -> epsilon\n");};
+
+//relation expression
+Relation_Exp:   NOT Relation_Cases  {printf("Relation_Exp -> NOT Relation_Cases\n");}
+        |       Relation_Cases  {printf("Relation_Exp -> Relation_Cases\n");};
 
 
 
-block:        MultDec begin_program MultStat  { printf( "block -> MultDec begin_program MultStat\n"); } ;
+// relation cases
+Relation_Cases:      Expression Comp Expression   {printf("Relation_Cases -> Expression Comp Expression\n");}
+        |      TRUE                         {printf("Relation_Cases -> TRUE\n");}
+        |      FALSE                        {printf("Relation_Cases -> FALSE\n");}
+        |      L_PAREN Bool_Exp R_PAREN     {printf("Relation_Cases -> L_PAREN Bool_Exp R_PAREN\n");};
 
 
 
+//compare
+Comp:          EQ       {printf( "Comp -> EQ\n");}
+        |      NEQ      {printf( "Comp -> NEQ\n");}
+        |      LT       {printf( "Comp -> LT\n");}
+        |      GT       {printf( "Comp -> GT\n");}
+        |      LTE      {printf( "Comp -> LTE\n");}
+        |      GTE      {printf( "Comp -> GTE\n");};
 
 
-MultDec:        declaration SEMICOLON MultDec   { printf( "MultDec -> declaration SEMICOLON MultDec\n"); }
-        |       declaration SEMICOLON           { printf( "MultDec -> declaration SEMICOLON\n"); };
+//expression
+Expression:    Multiplicative_Exp Multiplicative_Exp_Block    {printf("Expression -> Multiplicative_Exp_Block\n");};
 
-Declaration:    IDENT COMMA Declaration               { printf( "declaration -> ident COMMA declaration\n"); };
-        |       IDENT COLON alternativeArray  INTEGER { printf( "declaration -> ident COLON alternativeArray  INTEGER\n"); }
-        |       ident error alternativeArray  INTEGER ; //ERROR (on comma/colon)
+//multiplicative expression block
+Multiplicative_Exp_Block:      ADD Multiplicative_Exp Multiplicative_Exp_Block   {printf("Multiplicative_Exp_Block -> ADD Multiplicative_Exp Multiplicative_Exp_Block\n");}
+        |       SUB Multiplicative_Exp Multiplicative_Exp_Block {printf("Multiplicative_Exp_Block -> SUB Multiplicative_Exp Multiplicative_Exp_Block\n");}
+        |       %empty  {printf("Multiplicative_Exp_Block -> epsilon\n");};
 
-alternativeArray: ARRAY L_PAREN number R_PAREN OF  { printf( "alternativeArray -> ARRAY L_PAREN number R_PAREN OF\n"); }
-        |                                          { printf( "alternativeArray -> epsilon\n"); } ;
+//Multiplicative expression
+Multiplicative_Exp:     Term Term_Block {printf("Multiplicative_Exp -> Term Term_Block\n");};
 
-statement:      StaVar    { printf( "statement -> StaVar\n"); }
-        |       StaIf     { printf( "statement -> StaIf\n"); }
-        |       StaWhi    { printf( "statement -> StaWhi\n"); }
-        |       StaDo     { printf( "statement -> StaDo\n"); }
-        |       StaRea    { printf( "statement -> StaRea\n"); }
-        |       StaWri    { printf( "statement -> StaWri\n"); }
-        |       StaCon    { printf( "statement -> StaCon\n"); };
+//term block
+Term_Block:     MULT Term Term_Block   {printf("Term_Block -> MULT Term\n");}
+        |       DIV Term Term_Block    {printf("Term_Block -> DIV Term\n");}
+        |       MOD Term Term_Block    {printf("Term_Block -> MOD Term\n");};
+        |       %empty  {printf("Term_Block -> epsilon\n");};
 
-StaVar:         var ASSIGN expression    { printf( "StaVar -> var ASSIGN expression\n"); }
-        |       var error expression    ;  // ERROR (on assgnment symbol)
-
-StaIf:         IF bool_exp THEN MultStat alternativeElse ENDIF { printf( "StaIf -> IF bool_exp THEN MultStat alternativeElse ENDIF\n"); };
-
-alternativeElse: ELSE MultStat  { printf( "alternativeElse -> ELSE MultStat\n"); }
-        |                       { printf( "alternativeElse -> epsilon\n"); };
-
-StaWhi:        WHILE bool_exp BEGINLOOP MultStat ENDLOOP { printf( "StaWhi -> WHILE bool_exp BEGINLOOP MultStat ENDLOOP\n"); };
-
-StaDo:         DO BEGINLOOP  MultStat ENDLOOP WHILE bool_exp { printf( "StaDo -> DO BEGINLOOP  MultStat ENDLOOP WHILE bool_exp\n"); };
-
-StaRea:        READ MultVar         { printf( "StaRea -> READ MultVar\n"); };
-
-StaWri:        WRITE MultVar        { printf( "StaWri -> WRITE MultVar \n"); };
-
-StaCon:        CONTINUE             { printf( "StaCon -> CONTINUE\n"); };
-
-MultVar:       var COMMA MultVar    { printf( "MultVar -> var COMMA MultVar\n"); }
-        |      var                  { printf( "MultVar -> var\n"); };
-
-MultStat:      statement SEMICOLON MultStat     { printf( "MultStat -> statement SEMICOLON MultStat\n"); }
-        |      statement SEMICOLON              { printf( "MultStat -> statement SEMICOLON\n"); };
-
-bool_exp:      bool_exp OR relation_and_exp     { printf( "bool_exp -> bool_exp OR relation_and_exp\n"); }
-        |      relation_and_exp                 { printf( "bool_exp -> relation_and_exp\n"); };
-
-relation_and_exp:  relation_and_exp AND relation_exp    { printf( "relation_and_exp -> relation_and_exp AND relation_exp\n"); }
-        |          relation_exp                         { printf( "relation_and_exp -> relation_exp\n"); };
-
-relation_exp:  relCases             { printf( "relation_exp -> relCases\n"); }
-        |      NOT relCases         { printf( "relation_exp -> NOT relCases\n"); };
-
-relCases:      expression comp expression   { printf( "relCases -> expression comp expression\n"); }
-        |      TRUE                         { printf( "relCases -> TRUE\n"); }
-        |      FALSE                        { printf( "relCases -> FALSE\n"); }
-        |      L_PAREN bool_exp R_PAREN     { printf( "relCases -> L_PAREN bool_exp R_PAREN\n"); };
-
-comp:          EQ       { printf( "comp -> EQ\n"); }
-        |      NEQ      { printf( "comp -> NEQ\n"); }
-        |      LT       { printf( "comp -> LT\n"); }
-        |      GT       { printf( "comp -> GT\n"); }
-        |      LTE      { printf( "comp -> LTE\n"); }
-        |      GTE      { printf( "comp -> GTE\n"); };
-
-expression:    expression ADD multiplicative_exp    { printf( "expression -> expression ADD multiplicative_exp\n"); }
-        |      expression SUB multiplicative_exp    { printf( "expression -> expression SUB multiplicative_exp\n"); }
-        |      multiplicative_exp                   { printf( "expression -> multiplicative_exp\n"); };
-
-multiplicative_exp:  multiplicative_exp MULT term       { printf( "multiplicative_exp -> multiplicative_exp MULT term\n"); }
-        |            multiplicative_exp DIV term        { printf( "multiplicative_exp -> multiplicative_exp DIV term\n"); }
-        |            multiplicative_exp MOD term        { printf( "multiplicative_exp -> multiplicative_exp MOD term\n"); }
-        |            term                               { printf( "multiplicative_exp -> term\n"); };
-
-//TERM CASE
-term:          SUB terCases         { printf("term -> SUB terCases\n"); }
-        |      terCases             { printf("term -> terCases\n"); }
-|      ident L_PAREN Express_Block R_PAREN {printf("term -> ident L_PAREN Express_Block R_PAREN");};
+//term
+Term:          SUB Ter_Cases         {printf("Term -> SUB Ter_Cases\n"); }
+        |      Ter_Cases             {printf("Term -> Ter_Cases\n"); }
+        |      ident L_PAREN Expression_Block R_PAREN {printf("term -> ident L_PAREN Expression_Block R_PAREN");};
 
 //express BLOCK
-Express_Block: Expression           { printf("Express_Block -> Expression\n");} 
-        |      Expression COMMA Express_Block    {printf("Express_Block -> Expression COMMA\n");}
-        |      %empty               {printf("Express_Block -> epsilon\n");};       
+Expression_Block: Expression           {printf("Expression_Block -> Expression\n");} 
+        |      Expression COMMA Expression_Block    {printf("Expression_Block -> Expression COMMA\n");}
+        |      %empty               {printf("Expression_Block -> epsilon\n");};       
 
-terCases:      var                              { printf( "terCases -> var\n"); }
-        |      number                           { printf( "terCases -> number\n"); }
-        |      L_PAREN expression R_PAREN       { printf( "terCases -> L_PAREN expression R_PAREN\n"); };
 
-var:           ident                                { printf( "var -> ident\n"); }
-        |      ident L_PAREN expression R_PAREN     { printf( "var -> ident L_PAREN expression R_PAREN\n"); } ;
+Term_Cases:      Var                              {printf( "Term_Cases -> Var\n");}
+        |      number                           {printf( "Term_Cases -> number\n");}
+        |      L_PAREN Expression R_PAREN       {printf( "Term_Cases -> L_PAREN Expression R_PAREN\n");};
+
+Var:           ident                                {printf( "Var -> ident\n");}
+        |      ident L_PAREN Expression R_PAREN     {printf( "Var -> ident L_PAREN expression R_PAREN\n");};
 
 
 
