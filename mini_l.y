@@ -35,9 +35,6 @@ FILE * yyin;
 %left MULT DIV MOD
 
 
-/* TOKENS */
-ident:         IDENT        { printf( "Ident -> IDENT (%s)\n",$1); };
-number:        NUMBER        { printf( "number -> NUMBER (%d)\n",$1);};
 
 
 
@@ -192,6 +189,9 @@ Var:           		ident                   {printf( "Var -> ident\n");}
         |      		ident L_PAREN Expression R_PAREN     {printf( "Var -> ident L_PAREN expression R_PAREN\n");};
 
 
+/* TOKENS */
+ident:         IDENT        { printf( "Ident -> IDENT (%s)\n",$1); };
+number:        NUMBER        { printf( "number -> NUMBER (%d)\n",$1);};
 
 
 
