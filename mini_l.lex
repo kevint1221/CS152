@@ -32,7 +32,7 @@ endif		{ current_Pos += yyleng; text=strdup(yytext); return ENDIF;}
 else		{ current_Pos += yyleng; text=strdup(yytext); return ELSE;}
 while		{ current_Pos += yyleng; text=strdup(yytext); return WHILE;}
 do		{ current_Pos += yyleng; text=strdup(yytext); return DO;}
-for		{ current_Pos += ttleng; text=strdup(yytext); return FOR;}
+for		{ current_Pos += yyleng; text=strdup(yytext); return FOR;}
 beginloop	{ current_Pos += yyleng; text=strdup(yytext); return BEGINLOOP;}
 endloop		{ current_Pos += yyleng; text=strdup(yytext); return ENDLOOP;}
 continue	{ current_Pos += yyleng; text=strdup(yytext); return CONTINUE;}
@@ -43,7 +43,7 @@ or		{ current_Pos += yyleng; text=strdup(yytext); return OR;}
 not 		{ current_Pos += yyleng; text=strdup(yytext); return NOT;}
 true		{ current_Pos += yyleng; text=strdup(yytext); return TRUE;}
 false		{ current_Pos += yyleng; text=strdup(yytext); return FALSE;}
-return		{ CURRENT_POS += yyleng; text=strdup(yytext); return RETURN;}
+return		{ current_Pos += yyleng; text=strdup(yytext); return RETURN;}
  /* Arithmetic Operators */
 "-"             { current_Pos += yyleng; text=strdup(yytext); return SUB;}
 "+"             { current_Pos += yyleng; text=strdup(yytext); return ADD;}
