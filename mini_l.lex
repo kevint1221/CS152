@@ -22,7 +22,7 @@ endparams	{ current_Pos += yyleng; text=strdup(yytext); return END_PARAMS;}
 beginlocals	{ current_Pos += yyleng; text=strdup(yytext); return BEGIN_LOCALS;}
 endlocals	{ current_Pos += yyleng; text=strdup(yytext); return END_LOCALS;}
 beginbody	{ current_Pos += yyleng; text=strdup(yytext); return BEGIN_BODY;}
-endbody 	{ current_Pos += yyleng; text=strdup(yytext); return BEGIN_BODY;}
+endbody 	{ current_Pos += yyleng; text=strdup(yytext); return END_BODY;}
 integer		{ current_Pos += yyleng; text=strdup(yytext); return INTEGER;}
 array		{ current_Pos += yyleng; text=strdup(yytext); return ARRAY;}
 of		{ current_Pos += yyleng; text=strdup(yytext); return OF;}
