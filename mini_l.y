@@ -18,10 +18,10 @@ FILE * yyin;
 
 %union {
     int ival;
-    char *tokenName;
+    char* tokenName;
 }
-%start stprogram
-%token   FUNCTION BEGIN_PARAMS END_PARAMS BEGIN_LOCALS END_LOCALS BEGIN_BODY END_BODY INTEGER ARRAY OF IF THEN ENDIF ELSE WHILE DO FOR BEGINLOOP ENDLOOP CONTINUE READ WRITE AND OR NOT TRUE FALSE RETURN SUB ADD MULT DIV MOD EQ NEQ LT GT LTE GTE SEMICOLON COLON COMMA L_PAREN R_PAREN L_SQUARE_BRACKET R_SQUARE_BRACKET ASSIGN
+
+%token   FUNCTION BEGIN_PARAMS END_PARAMS BEGIN_LOCALS END_LOCALS BEGIN_BODY END_BODY INTEGER ARRAY OF IF THEN ENDIF ELSE WHILE DO FOR BEGINLOOP ENDLOOP CONTINUE READ WRITE AND OR NOT TRUE FALSE RETURN SUB ADD MULT DIV MOD EQ NEQ LT GT LTE GTE SEMICOLON COLON COMMA L_PAREN R_PAREN L_SQUARE_BRACKET R_SQUARE_BRACKET ASSIGN 
 %token <ival> NUMBER
 %token <tokenName> IDENT
 
@@ -35,16 +35,16 @@ FILE * yyin;
 %left MULT DIV MOD
 
 
-
 /* TOKENS */
-ident:         IDENT        { printf( "ident -> IDENT (%s)\n",$1); };
+ident:         IDENT        { printf( "Ident -> IDENT (%s)\n",$1); };
 number:        NUMBER        { printf( "number -> NUMBER (%d)\n",$1);};
+
 
 
 /* GRAMMAR RULES  */
 %%
 
-stprogram:        program ident SEMICOLON block end_program { printf( "stprogram -> program ident SEMICOLON block end_program \n"); };
+
 
 //program
 Program:        Function {printf("Program -> Function\n"); }
@@ -52,7 +52,7 @@ Program:        Function {printf("Program -> Function\n"); }
         |       %empty {printf("Program -> epsilon\n");};
 
 //function
-Function:       FUNCTION ident SEMICOLON BEGIN_PARAMS Declar_Block END_PARAMS BEGIN_LOCALS Declaration_Block END_LOCALS BEGIN_BODY Statement_Block {printf("FUNCTION IDENT SEMICOLON BEGIN_PARAMS Declaration_Block END_PARAMS BEGIN_LOCALS Declaration_Block END_LOCALS BEGIN_BODY Statement_Block\n");};
+Function:       FUNCTION ident SEMICOLON BEGIN_PARAMS Declaration_Block END_PARAMS BEGIN_LOCALS Declaration_Block END_LOCALS BEGIN_BODY Statement_Block END_BODY {printf("FUNCTION IDENT SEMICOLON BEGIN_PARAMS Declaration_Block END_PARAMS BEGIN_LOCALS Declaration_Block END_LOCALS BEGIN_BODY Statement_Block END_BODY \n");};
 
 //declaration block
 Declaration_Block:   Declaration SEMICOLON {printf("Declaration_Block -> declaration SEMICOLON \n");}
@@ -64,15 +64,15 @@ Statement_Block:    Statement SEMICOLON {printf("Statement_Block -> Statement SE
         |       Statement SEMICOLON Statement_Block {printf("Statement_Block -> Statement SEMICOLON Statement_Block\n");};
 
 //declaration
-Declaration:    IDENT COMMA Declaration               {printf("declaration -> ident COMMA declaration\n");};
-        |       IDENT COLON Array_Block  INTEGER {printf("declaration -> ident COLON Array_Block INTEGER\n");};
+Declaration:    ident COMMA Declaration               {printf("declaration -> ident COMMA declaration\n");};
+        |       ident COLON Array_Block  INTEGER {printf("declaration -> ident COLON Array_Block INTEGER\n");};
         
 //array block
 Array_Block: ARRAY L_PAREN number R_PAREN OF  {printf("Array_Block -> ARRAY L_PAREN number R_PAREN OF\n");}
         |    %empty                           {printf("Array_Block -> epsilon\n");};
 
 //statement
-Statement:      Stament_Var    {printf("Statement -> Statement_Var\n");}
+Statement:      Statement_Var    {printf("Statement -> Statement_Var\n");}
         |       Statement_If     {printf("Statement -> Statement_If\n");}
         |       Statement_While    {printf("Statement -> Statement_While\n");}
         |       Statement_Do        {printf("Statement -> Statement_Do\n");}
@@ -80,7 +80,7 @@ Statement:      Stament_Var    {printf("Statement -> Statement_Var\n");}
         |       Statement_Read    {printf("Statement -> Statement_Read\n");}
         |       Statement_Write    {printf("Statement -> Sta_Write\n");}
         |       Statement_Continue    {printf("Statement -> Statement_Continue\n");}
-        |       Statenent_Return     {printf("Statement -> Statement_Return\n");};
+        |       Statement_Return     {printf("Statement -> Statement_Return\n");};
 
 
 //statement var
@@ -120,14 +120,14 @@ Statement_Continue:        CONTINUE             {printf("Statement_Continue -> C
 Statement_Return:       RETURN Expression {printf("Statement_Return -> RETURN Expression");};
 
 //boolean expression
-Bool_Exp:      Relation_And_Exp Or_Relation_And_Exp     {printf("Bool_Exp -> Relation_And_Exp Or_Relation_And_Exp\n"); }   
+Bool_Exp:      Relation_And_Exp Or_Relation_And_Exp_Block     {printf("Bool_Exp -> Relation_And_Exp Or_Relation_And_Exp\n"); }   
 
 //or relation and expression block
 Or_Relation_And_Exp_Block:        OR Relation_And_Exp Or_Relation_And_Exp_Block {printf("Or_Relation_Exp -> OR Relation_Exp Or_Relation_And_Exp_Block\n");}
         |       %empty  {printf("Or_Relation_And_Exp_Block -> epsilon\n");};
 
 //relation and expression
-Relation_And_Exp:  Relation_Exp relation_and_exp AND relation_exp    { printf( "relation_and_exp -> relation_and_exp AND relation_exp\n");};
+Relation_And_Exp:  Relation_Exp And_Relation_Block    { printf( "relation_and_exp -> relation_Exp And_Relation_Block\n");};
 
 //and relation block
 And_Relation_Block:     AND Relation_Exp And_Relation_Block {printf("And_Relation_Block -> AND Relation_Exp And_Relation_Block\n");}
@@ -174,8 +174,8 @@ Term_Block:     MULT Term Term_Block   {printf("Term_Block -> MULT Term\n");}
         |       %empty  {printf("Term_Block -> epsilon\n");};
 
 //term
-Term:          SUB Ter_Cases         {printf("Term -> SUB Ter_Cases\n"); }
-        |      Ter_Cases             {printf("Term -> Ter_Cases\n"); }
+Term:          SUB Term_Cases         {printf("Term -> SUB Ter_Cases\n"); }
+        |      Term_Cases             {printf("Term -> Ter_Cases\n"); }
         |      ident L_PAREN Expression_Block R_PAREN {printf("term -> ident L_PAREN Expression_Block R_PAREN");};
 
 //express BLOCK
@@ -221,7 +221,7 @@ void yyerror(const char *msg) {
 if (val==0)
   {printf( " Unexpected Symbol \"%s\" Did You Mean ':='?\n", text);}
   else
- {printf( " Error on or before imput \"%s\" \n", text);}
+ {printf( " Error on or before input \"%s\" \n", text);}
   ;
     
 }
