@@ -58,7 +58,7 @@ int booleancount=0;
 string newvar(int *a,bool b)
 {   string tmp;
     if (b)
-    { tmp.append("t");
+    { tmp.append("__temp__");
       tmp.append(to_string(*a));
     }
     else{
@@ -85,7 +85,7 @@ map<string, int> SymbolTab;
     } expr;
 }
 %start stprogram
-%token   PROGRAM FUNCTION BEGIN_BODY END_BODY BEGIN_PARAMS END_PARAMS BEGIN_LOCALS END_LOCALS SPROGRAM BEGIN_PROGRAM END_PROGRAM INTEGER ARRAY OF IF THEN ENDIF ELSE WHILE DO BEGINLOOP ENDLOOP CONTINUE READ WRITE AND OR NOT TRUE FALSE SUB ADD MULT DIV MOD EQ NEQ LT GT LTE GTE SEMICOLON COLON COMMA L_PAREN R_PAREN ASSIGN
+%token   R_SQUARE_BRACKET L_SQUARE_BRACKET PROGRAM FUNCTION BEGIN_BODY END_BODY BEGIN_PARAMS END_PARAMS BEGIN_LOCALS END_LOCALS SPROGRAM BEGIN_PROGRAM END_PROGRAM INTEGER ARRAY OF IF THEN ENDIF ELSE WHILE DO BEGINLOOP ENDLOOP CONTINUE READ WRITE AND OR NOT TRUE FALSE SUB ADD MULT DIV MOD EQ NEQ LT GT LTE GTE SEMICOLON COLON COMMA L_PAREN R_PAREN ASSIGN
 
 /*======= Types ======*/
 %token <ival> NUMBER
@@ -116,8 +116,12 @@ stprogram:        Function
 
 Function: FUNCTION ident SEMICOLON BEGIN_PARAMS END_PARAMS block END_BODY
 {
+	string tmp= "func" + string($2.result_id);
+    identifiers.push(tmp);
+    count++;
+    
 
-}
+};
 
 block:          BEGIN_LOCALS MultDec END_LOCALS BEGIN_BODY MultStat  {
 
@@ -236,7 +240,7 @@ terCases:      var                              { $$.result_id = strdup($1.resul
 
 var:           ident                                { string tmp;tmp.append("");tmp.append($1.result_id);
     $$.result_id=strdup(tmp.c_str());$$.code=strdup("");}
-|      ident L_PAREN expression R_PAREN     {  string tmp;tmp.append("_");tmp.append($1.result_id);
+|      ident L_SQUARE_BRACKET expression R_SQUARE_BRACKET     {  string tmp;tmp.append("_");tmp.append($1.result_id);
     $$.result_id=strdup(tmp.c_str());$$.code=strdup("");} ;
 
 ident:         IDENT
