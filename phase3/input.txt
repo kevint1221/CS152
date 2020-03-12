@@ -1,0 +1,21 @@
+function primes;
+beginparams
+endparams
+beginlocals
+
+n : integer;
+a : array(1000) of integer;	## prime candidates array
+i, j : integer;
+x, sqrt_n : integer;
+
+endlocals
+beginbody
+
+read n;
+x := x + n;
+
+write x;
+
+
+
+endbody
