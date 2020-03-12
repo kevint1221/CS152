@@ -1,7 +1,5 @@
-/* CS152: Compiler Design Summer 2019
- * Bison Specification: PHASE 3
- * Arturo Perez
- * SID: 862046334
+/* 
+ * 
  */
 
 
@@ -32,7 +30,7 @@ ostringstream convert;
 ofstream MilCode;
 string name;
 int identCount=0;
-int count=0;
+int counting=0;
 int Tcount=0;
 stack<string> identifiers;
 stack<string> temporaries;
@@ -58,11 +56,11 @@ int booleancount=0;
 string newvar(int *a,bool b)
 {   string tmp;
     if (b)
-    { tmp.append("__temp__");
+    { tmp.append("__label__");
       tmp.append(to_string(*a));
     }
     else{
-        tmp.append("p");
+        tmp.append("__temp__");
         tmp.append(to_string(*a));}
     *a=*a+1;
     return tmp;
@@ -85,7 +83,7 @@ map<string, int> SymbolTab;
     } expr;
 }
 %start stprogram
-%token   R_SQUARE_BRACKET L_SQUARE_BRACKET PROGRAM FUNCTION BEGIN_BODY END_BODY BEGIN_PARAMS END_PARAMS BEGIN_LOCALS END_LOCALS SPROGRAM BEGIN_PROGRAM END_PROGRAM INTEGER ARRAY OF IF THEN ENDIF ELSE WHILE DO BEGINLOOP ENDLOOP CONTINUE READ WRITE AND OR NOT TRUE FALSE SUB ADD MULT DIV MOD EQ NEQ LT GT LTE GTE SEMICOLON COLON COMMA L_PAREN R_PAREN ASSIGN
+%token   FOR RETURN R_SQUARE_BRACKET L_SQUARE_BRACKET PROGRAM FUNCTION BEGIN_BODY END_BODY BEGIN_PARAMS END_PARAMS BEGIN_LOCALS END_LOCALS SPROGRAM BEGIN_PROGRAM END_PROGRAM INTEGER ARRAY OF IF THEN ENDIF ELSE WHILE DO BEGINLOOP ENDLOOP CONTINUE READ WRITE AND OR NOT TRUE FALSE SUB ADD MULT DIV MOD EQ NEQ LT GT LTE GTE SEMICOLON COLON COMMA L_PAREN R_PAREN ASSIGN
 
 /*======= Types ======*/
 %token <ival> NUMBER
@@ -107,33 +105,28 @@ map<string, int> SymbolTab;
 /*===== GRAMMAR RULES ===== */
 %%
 
-stprogram:        Function
+stprogram:        FUNCTION ident SEMICOLON BEGIN_PARAMS END_PARAMS BEGIN_LOCALS MultDec END_LOCALS BEGIN_BODY MultStat END_BODY
 {
-    MilCode.open (name.c_str());
-    MilCode << code.str();
-    MilCode.close();
-};
-
-Function: FUNCTION ident SEMICOLON BEGIN_PARAMS END_PARAMS block END_BODY
-{
-	string tmp= "func" + string($2.result_id);
+    string tmp= "func " + string($2.result_id);
     identifiers.push(tmp);
-    count++;
+    counting++;
     
-
-};
-
-block:          BEGIN_LOCALS MultDec END_LOCALS BEGIN_BODY MultStat  {
-
-    while(count!=0)
-    {   code<<". "<< identifiers.top()<<endl;
-        count--;
+    while(counting!=0)
+    {  
+        code<<". "<< identifiers.top()<<endl;
+        counting--;
         identifiers.pop();
     } while(Tcount!=0)
     {   code<<". "<< temporaries.top()<<endl;
         Tcount--;
         temporaries.pop();
-    }  code<<$5.code;} ;
+    }code<<$10.code;
+    MilCode.open (name.c_str());
+    MilCode << code.str();
+    MilCode.close();
+
+};
+
 
 MultDec:        declainter SEMICOLON MultDec   {  }
         |       declainter SEMICOLON           {  };
@@ -143,22 +136,31 @@ declainter: declaration    { };
 declaration:    ident COMMA declaration        {
     string tmp=string($1.result_id);
     identifiers.push(tmp);
-    count++;
+    counting++;
     $$.result_id = strdup(tmp.c_str());
     $$.code = strdup("");
  }
-        |       ident COLON alternativeArray  INTEGER {
-        string tmp=string($1.result_id);
+        |       ident COLON ARRAY L_SQUARE_BRACKET number R_SQUARE_BRACKET OF  INTEGER {
+        string tmp = "[] ";
+        tmp.append(string($1.result_id));
+        tmp.append(", ");
+        tmp.append($5.result_id);
         identifiers.push(tmp);
-        count++;
+        counting++;
         $$.result_id = strdup(tmp.c_str());
         $$.code = strdup("");
-            
         }
-        |       ident error alternativeArray  INTEGER ; //ERROR (on comma/colon)
+        |       ident COLON INTEGER {
+        string tmp = string($1.result_id);
+        identifiers.push(tmp);
+        counting++;
+        $$.result_id = strdup(tmp.c_str());
+        $$.code = strdup("");
+        } ;
 
-alternativeArray: ARRAY L_PAREN number R_PAREN OF  {  }
-        |                                          {  } ;
+        
+
+
 
 statement:      StaVar    { $$.code = strdup($1.code);}
         |       StaIf     {  }
@@ -171,7 +173,7 @@ statement:      StaVar    { $$.code = strdup($1.code);}
 StaVar:         var ASSIGN expression    {
     string tmp;
     tmp.append($3.code);
-    tmp.append("    = ");
+    tmp.append(" = ");
     tmp.append($1.result_id);
     tmp.append(", ");
     tmp.append($3.result_id);
@@ -179,7 +181,10 @@ StaVar:         var ASSIGN expression    {
     $$.code=strdup(tmp.c_str());  }
         |       var error expression    ;  // ERROR (on assgnment symbol)
 
-StaIf:         IF bool_exp THEN MultStat alternativeElse ENDIF {  };
+StaIf:         IF bool_exp THEN MultStat alternativeElse ENDIF { 
+        string bvar; bvar.append(newvar(&booleancount,0));temporaries.push(bvar);Tcount++; string tmp,Slabel,Elabel; Slabel.append(newlabel(&labelcount)); Elabel; Elabel.append(newlabel(&labelcount));     tmp.append(":"+Slabel+"\n");tmp.append($2.code); tmp.append("    == "+bvar+", ");tmp.append($2.result_id);tmp.append(", 0\n"); tmp.append("    ?:="+Elabel+", "+bvar+"\n");       tmp.append($4.code);tmp.append("    :=");tmp.append(Slabel+"\n");tmp.append(": "+Elabel+"\n"); 
+
+     };
 
 alternativeElse: ELSE MultStat  {  }
         |                       {  };

@@ -4,17 +4,35 @@ endparams
 beginlocals
 
 n : integer;
-a : array(1000) of integer;	## prime candidates array
+a : array[1000] of integer;	## prime candidates array
 i, j : integer;
 x, sqrt_n : integer;
 
 endlocals
 beginbody
 
+##hello i hope this line doesn't do shit
+
 read n;
-x := x + n;
+x := n;
+while x > n / x beginloop
+	x := (x+n /x) /2;
+endloop;
+sqrt_n := x;
+
+i :=2;
+while i <= n beginloop
+	a[i] := 0;
+	i := i + 1;
+endloop;
 
 write x;
+
+i := 2;
+## while i <= n beginloop
+##	if a[i] == 0 then 
+##		write i;
+##	endif;
 
 
 
