@@ -43,7 +43,7 @@ string newlabel(int *a)
     if (*a<0)
     { tmp.append(": START\n");}
     else{
-    tmp.append(" L");
+    tmp.append("__label__");
     tmp.append(to_string(*a));}
     
     *a=*a+1;
@@ -56,11 +56,11 @@ int booleancount=0;
 string newvar(int *a,bool b)
 {   string tmp;
     if (b)
-    { tmp.append("__label__");
+    { tmp.append("__temporary__");
       tmp.append(to_string(*a));
     }
     else{
-        tmp.append("__temp__");
+        tmp.append("p");
         tmp.append(to_string(*a));}
     *a=*a+1;
     return tmp;
@@ -90,7 +90,7 @@ map<string, int> SymbolTab;
 %token <tokenName> IDENT
 %type <expr> var declaration declainter number term terCases relation_and_exp comp StaWri
 %type <expr> ident StaVar MultStat statement expression StaRea relCases relation_exp
-%type <expr> multiplicative_exp MultVar begin_program StaWhi bool_exp   block MultDec
+%type <expr> multiplicative_exp MultVar Begin_params StaWhi bool_exp StaDo block MultDec
 
 
 /*===== ASSOCIATIVITY & PRECEDENCE====*/
@@ -105,7 +105,7 @@ map<string, int> SymbolTab;
 /*===== GRAMMAR RULES ===== */
 %%
 
-stprogram:        FUNCTION ident SEMICOLON BEGIN_PARAMS END_PARAMS BEGIN_LOCALS MultDec END_LOCALS BEGIN_BODY MultStat END_BODY
+stprogram:        FUNCTION ident SEMICOLON Begin_params END_PARAMS BEGIN_LOCALS MultDec END_LOCALS BEGIN_BODY MultStat END_BODY
 {
     string tmp= "func " + string($2.result_id);
     identifiers.push(tmp);
@@ -113,9 +113,20 @@ stprogram:        FUNCTION ident SEMICOLON BEGIN_PARAMS END_PARAMS BEGIN_LOCALS 
     
     while(counting!=0)
     {  
-        code<<". "<< identifiers.top()<<endl;
-        counting--;
-        identifiers.pop();
+        //if it is first don't do .
+        if(!identifiers.top().find("func"))
+        {
+            code<< identifiers.top()<<endl;
+            counting--;
+            identifiers.pop();
+        }
+        else
+        {
+            code<<". "<< identifiers.top()<<endl;
+            counting--;
+            identifiers.pop();
+        }
+        
     } while(Tcount!=0)
     {   code<<". "<< temporaries.top()<<endl;
         Tcount--;
@@ -165,7 +176,7 @@ declaration:    ident COMMA declaration        {
 statement:      StaVar    { $$.code = strdup($1.code);}
         |       StaIf     {  }
         |       StaWhi    { $$.code = strdup($1.code); }
-        |       StaDo     {  }
+        |       StaDo     { $$.code = strdup($1.code); }
         |       StaRea    { $$.code = strdup($1.code); }
         |       StaWri    { $$.code = strdup($1.code); }
         |       StaCon    {  };
@@ -182,20 +193,25 @@ StaVar:         var ASSIGN expression    {
         |       var error expression    ;  // ERROR (on assgnment symbol)
 
 StaIf:         IF bool_exp THEN MultStat alternativeElse ENDIF { 
-        string bvar; bvar.append(newvar(&booleancount,0));temporaries.push(bvar);Tcount++; string tmp,Slabel,Elabel; Slabel.append(newlabel(&labelcount)); Elabel; Elabel.append(newlabel(&labelcount));     tmp.append(":"+Slabel+"\n");tmp.append($2.code); tmp.append("    == "+bvar+", ");tmp.append($2.result_id);tmp.append(", 0\n"); tmp.append("    ?:="+Elabel+", "+bvar+"\n");       tmp.append($4.code);tmp.append("    :=");tmp.append(Slabel+"\n");tmp.append(": "+Elabel+"\n"); 
+
 
      };
 
 alternativeElse: ELSE MultStat  {  }
         |                       {  };
 
-StaWhi:        WHILE bool_exp BEGINLOOP MultStat ENDLOOP {string bvar; bvar.append(newvar(&booleancount,0));temporaries.push(bvar);Tcount++; string tmp,Slabel,Elabel; Slabel.append(newlabel(&labelcount)); Elabel; Elabel.append(newlabel(&labelcount));     tmp.append(":"+Slabel+"\n");tmp.append($2.code); tmp.append("    == "+bvar+", ");tmp.append($2.result_id);tmp.append(", 0\n"); tmp.append("    ?:="+Elabel+", "+bvar+"\n");       tmp.append($4.code);tmp.append("    :=");tmp.append(Slabel+"\n");tmp.append(": "+Elabel+"\n"); $$.code=strdup(tmp.c_str()); };
+StaWhi:        WHILE bool_exp BEGINLOOP MultStat ENDLOOP {string bvar; bvar.append(newvar(&booleancount,0));temporaries.push(bvar);Tcount++; string tmp,Slabel,Elabel; Slabel.append(newlabel(&labelcount)); Elabel.append(newlabel(&labelcount));     tmp.append(":"+Slabel+"\n");tmp.append($2.code); tmp.append("== "+bvar+", ");tmp.append($2.result_id);tmp.append(", 0\n"); tmp.append("?:="+Elabel+", "+bvar+"\n");       tmp.append($4.code);tmp.append(":=");tmp.append(Slabel+"\n");tmp.append(": "+Elabel+"\n"); $$.code=strdup(tmp.c_str()); };
 
-StaDo:         DO BEGINLOOP  MultStat ENDLOOP WHILE bool_exp {  };
 
-StaRea:        READ MultVar         {  string tmp; tmp.append("    .< "); tmp.append($2.result_id); tmp.append("\n"); $$.code=strdup(tmp.c_str()); };
+// newlabel is for new label
 
-StaWri:        WRITE MultVar        { string tmp; tmp.append("    .> "); tmp.append($2.result_id); tmp.append("\n"); $$.code=strdup(tmp.c_str());  };
+StaDo:         DO BEGINLOOP  MultStat ENDLOOP WHILE bool_exp { string bvar; bvar.append(newvar(&booleancount,0));temporaries.push(bvar); string tmp,Slabel,Elabel; Slabel.append(newlabel(&labelcount));Elabel.append(newlabel(&labelcount));  tmp.append(":"+Slabel+"\n");tmp.append($3.code); tmp.append("== "+bvar+", ");tmp.append("?:="+Elabel+", "+bvar+"\n");tmp.append($6.result_id);tmp.append(", 0\n");$$.code=strdup(tmp.c_str());};
+
+
+
+StaRea:        READ MultVar         {  string tmp; tmp.append(".< "); tmp.append($2.result_id); tmp.append("\n"); $$.code=strdup(tmp.c_str()); };
+
+StaWri:        WRITE MultVar        { string tmp; tmp.append(".> "); tmp.append($2.result_id); tmp.append("\n"); $$.code=strdup(tmp.c_str());  };
 
 StaCon:        CONTINUE             {  };
 
@@ -214,7 +230,7 @@ relation_and_exp:  relation_and_exp AND relation_exp    {  }
 relation_exp:  relCases             {  $$.code = strdup($1.code);$$.result_id = strdup($1.result_id); }
         |      NOT relCases         {  };
 
-relCases:      expression comp expression   {  string tmp,bvar; bvar.append(newvar(&booleancount,0));temporaries.push(bvar);Tcount++; tmp.append("    ");tmp.append($2.result_id);tmp.append(" "+bvar);tmp.append(", ");tmp.append($1.result_id);tmp.append(", ");tmp.append($3.result_id); tmp.append("\n");$$.code=strdup(tmp.c_str());$$.result_id=strdup(bvar.c_str());   }
+relCases:      expression comp expression   {  string tmp,bvar; bvar.append(newvar(&booleancount,0));temporaries.push(bvar);Tcount++; tmp.append("");tmp.append($2.result_id);tmp.append(" "+bvar);tmp.append(", ");tmp.append($1.result_id);tmp.append(", ");tmp.append($3.result_id); tmp.append("\n");$$.code=strdup(tmp.c_str());$$.result_id=strdup(bvar.c_str());   }
         |      TRUE                         {  }
         |      FALSE                        {  }
         |      L_PAREN bool_exp R_PAREN     {  };
@@ -226,7 +242,7 @@ comp:          EQ       {  $$.result_id=strdup("=="); }
         |      LTE      {  $$.result_id=strdup("<="); }
         |      GTE      {  $$.result_id=strdup(">="); };
 
-expression:    expression ADD multiplicative_exp    {string tmp, tmVar; tmVar=newvar(&tempcount,1);temporaries.push(tmVar);Tcount++; tmp.append("    + ");tmp.append(tmVar); tmp.append(", "); tmp.append($1.result_id); tmp.append(", "); tmp.append($3.result_id);tmp.append("\n"); $$.code=strdup(tmp.c_str()); $$.result_id=strdup(tmVar.c_str()); }
+expression:    expression ADD multiplicative_exp    {string tmp, tmVar; tmVar=newvar(&tempcount,1);temporaries.push(tmVar);Tcount++; tmp.append("+ ");tmp.append(tmVar); tmp.append(", "); tmp.append($1.result_id); tmp.append(", "); tmp.append($3.result_id);tmp.append("\n"); $$.code=strdup(tmp.c_str()); $$.result_id=strdup(tmVar.c_str()); }
 
         |      expression SUB multiplicative_exp    {  }
         |      multiplicative_exp                   { $$.result_id = strdup($1.result_id);$$.code=strdup(""); };
@@ -256,9 +272,8 @@ ident:         IDENT
             $$.code = strdup("");}
 };
 number:        NUMBER        {  $$.result_id = strdup(to_string($1).c_str());$$.code=strdup("");};
-program:       PROGRAM       {  };
-end_program:   END_PROGRAM   {  };
-begin_program:   BEGIN_PROGRAM   { $$.code=strdup((newlabel(&labelcount)).c_str()); };
+
+Begin_params:   BEGIN_PARAMS   { $$.code=strdup((newlabel(&labelcount)).c_str()); };
 
 %%
 

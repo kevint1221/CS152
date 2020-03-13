@@ -1,1 +1,1 @@
-make clean && make && ./parser input.txt
+make clean && make && ./parser input2.txt && ./parser input.txt
