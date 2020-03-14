@@ -34,6 +34,7 @@ int counting=0;
 int Tcount=0;
 stack<string> identifiers;
 stack<string> temporaries;
+stack<string> labels;
 
 
 //FUNCTION TO CREATE NEW LABELS//
@@ -83,14 +84,14 @@ map<string, int> SymbolTab;
     } expr;
 }
 %start stprogram
-%token   FOR RETURN R_SQUARE_BRACKET L_SQUARE_BRACKET PROGRAM FUNCTION BEGIN_BODY END_BODY BEGIN_PARAMS END_PARAMS BEGIN_LOCALS END_LOCALS SPROGRAM BEGIN_PROGRAM END_PROGRAM INTEGER ARRAY OF IF THEN ENDIF ELSE WHILE DO BEGINLOOP ENDLOOP CONTINUE READ WRITE AND OR NOT TRUE FALSE SUB ADD MULT DIV MOD EQ NEQ LT GT LTE GTE SEMICOLON COLON COMMA L_PAREN R_PAREN ASSIGN
+%token    PROGRAM FUNCTION BEGIN_BODY END_BODY BEGIN_PARAMS END_PARAMS BEGIN_LOCALS END_LOCALS  BEGIN_PROGRAM END_PROGRAM FOR RETURN R_SQUARE_BRACKET L_SQUARE_BRACKET INTEGER ARRAY OF IF THEN ENDIF ELSE WHILE DO BEGINLOOP ENDLOOP CONTINUE READ WRITE AND OR NOT TRUE FALSE SUB ADD MULT DIV MOD EQ NEQ LT GT LTE GTE SEMICOLON COLON COMMA L_PAREN R_PAREN ASSIGN 
 
 /*======= Types ======*/
 %token <ival> NUMBER
 %token <tokenName> IDENT
 %type <expr> var declaration declainter number term terCases relation_and_exp comp StaWri
-%type <expr> ident StaVar MultStat statement expression StaRea relCases relation_exp
-%type <expr> multiplicative_exp MultVar Begin_params StaWhi bool_exp StaDo block MultDec
+%type <expr> ident StaVar MultStat statement expression StaRea relCases relation_exp StaIf
+%type <expr> multiplicative_exp MultVar Begin_params StaWhi bool_exp StaDo StaCon MultDec StaRet alternativeElse StaFor 
 
 
 /*===== ASSOCIATIVITY & PRECEDENCE====*/
@@ -174,12 +175,15 @@ declaration:    ident COMMA declaration        {
 
 
 statement:      StaVar    { $$.code = strdup($1.code);}
-        |       StaIf     {  }
+        |       StaIf     { $$.code = strdup($1.code); }
+        |       StaFor    { $$.code = strdup($1.code); }
         |       StaWhi    { $$.code = strdup($1.code); }
         |       StaDo     { $$.code = strdup($1.code); }
         |       StaRea    { $$.code = strdup($1.code); }
         |       StaWri    { $$.code = strdup($1.code); }
-        |       StaCon    {  };
+        |       StaCon    { $$.code = strdup($1.code); }
+        |       StaRet    { $$.code = strdup($1.code); };
+        
 
 StaVar:         var ASSIGN expression    {
     string tmp;
@@ -192,15 +196,17 @@ StaVar:         var ASSIGN expression    {
     $$.code=strdup(tmp.c_str());  }
         |       var error expression    ;  // ERROR (on assgnment symbol)
 
-StaIf:         IF bool_exp THEN MultStat alternativeElse ENDIF { 
 
+//only differnt between while and if is: if doesn't loop back
 
+StaIf:         IF bool_exp THEN MultStat alternativeElse ENDIF {string bvar,Elabel,Slabel; bvar.append(newvar(&booleancount,0));temporaries.push(bvar);Tcount++;Elabel.append(newlabel(&labelcount));Slabel.append(newlabel(&labelcount));    string tmp; tmp.append($2.code); tmp.append("== "+bvar+", ");tmp.append($2.result_id);tmp.append(", 0\n");  tmp.append("?:="+Elabel+", "+bvar+"\n");tmp.append($4.code);tmp.append(":=");tmp.append(Slabel+"\n");   tmp.append(": "+Elabel+"\n");tmp.append($5.code); tmp.append(": "+Slabel+"\n");$$.code=strdup(tmp.c_str());} 
+        |      IF bool_exp THEN MultStat ENDIF {string bvar,Elabel; bvar.append(newvar(&booleancount,0));temporaries.push(bvar);Tcount++;Elabel.append(newlabel(&labelcount));   string tmp; tmp.append($2.code); tmp.append("== "+bvar+", ");tmp.append($2.result_id);tmp.append(", 0\n");  tmp.append("?:="+Elabel+", "+bvar+"\n");tmp.append($4.code);tmp.append(": "+Elabel+"\n");  $$.code=strdup(tmp.c_str());
      };
 
-alternativeElse: ELSE MultStat  {  }
-        |                       {  };
+alternativeElse: ELSE MultStat  { string tmp; tmp.append($2.code);$$.code=strdup(tmp.c_str());$$.result_id=strdup(tmp.c_str()); }
+        |                       { };
 
-StaWhi:        WHILE bool_exp BEGINLOOP MultStat ENDLOOP {string bvar; bvar.append(newvar(&booleancount,0));temporaries.push(bvar);Tcount++; string tmp,Slabel,Elabel; Slabel.append(newlabel(&labelcount)); Elabel.append(newlabel(&labelcount));     tmp.append(":"+Slabel+"\n");tmp.append($2.code); tmp.append("== "+bvar+", ");tmp.append($2.result_id);tmp.append(", 0\n"); tmp.append("?:="+Elabel+", "+bvar+"\n");       tmp.append($4.code);tmp.append(":=");tmp.append(Slabel+"\n");tmp.append(": "+Elabel+"\n"); $$.code=strdup(tmp.c_str()); };
+StaWhi:        WHILE bool_exp BEGINLOOP MultStat ENDLOOP {string bvar; bvar.append(newvar(&booleancount,0));temporaries.push(bvar);Tcount++; string tmp,Slabel,Elabel; Slabel.append(newlabel(&labelcount)); Elabel.append(newlabel(&labelcount)); if(!labels.empty()){ Slabel = labels.top(); labels.pop();}tmp.append(":"+Slabel+"\n");tmp.append($2.code); tmp.append("== "+bvar+", ");tmp.append($2.result_id);tmp.append(", 0\n"); tmp.append("?:="+Elabel+", "+bvar+"\n");       tmp.append($4.code);tmp.append(":=");tmp.append(Slabel+"\n");tmp.append(": "+Elabel+"\n"); $$.code=strdup(tmp.c_str()); };
 
 
 // newlabel is for new label
@@ -213,7 +219,13 @@ StaRea:        READ MultVar         {  string tmp; tmp.append(".< "); tmp.append
 
 StaWri:        WRITE MultVar        { string tmp; tmp.append(".> "); tmp.append($2.result_id); tmp.append("\n"); $$.code=strdup(tmp.c_str());  };
 
-StaCon:        CONTINUE             {  };
+StaFor:         FOR                  {  };
+
+StaCon:        CONTINUE             {string Slabel; Slabel.append(newlabel(&labelcount));labels.push(Slabel);  };
+
+StaRet:        RETURN               {  };
+
+
 
 MultVar:       var COMMA MultVar    {  }
         |      var                  { $$.result_id = strdup($1.result_id); };
