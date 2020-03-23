@@ -1,0 +1,13 @@
+HTTrack3.49-2+htsswf+htsjava launched on Mon, 23 Mar 2020 07:21:50 at https://www.cs.ucr.edu/~gupta/teaching/152-20w/ +*.png +*.gif +*.jpg +*.jpeg +*.css +*.js -ad.doubleclick.net/* -mime:application/foobar
+(winhttrack -qwC2%Ps2u1%s%uN0%I0p3DaK0H0%kf2A25000%f#f -F "Mozilla/4.5 (compatible; HTTrack 3.0x; Windows 98)" -%F "<!-- Mirrored from %s%s by HTTrack Website Copier/3.x [XR&CO'2014], %s -->" -%l "en, *" https://www.cs.ucr.edu/~gupta/teaching/152-20w/ -O1 "C:\My Web Sites\cs152" +*.png +*.gif +*.jpg +*.jpeg +*.css +*.js -ad.doubleclick.net/* -mime:application/foobar )
+
+Information, Warnings and Errors reported for this mirror:
+note:	the hts-log.txt file, and hts-cache folder, may contain sensitive information,
+	such as username/password authentication for websites mirrored in this project
+	do not share these files/folders if you want these information to remain private
+
+07:22:00	Error: 	"Forbidden" (403) at link https://www.cs.ucr.edu/~gupta/teaching/152-20w/Project-Phase-I/syntax.html (from https://www.cs.ucr.edu/~gupta/teaching/152-20w/Project-Phase-I/lab01_lexer.html)
+07:22:00	Error: 	"Forbidden" (403) at link https://www.cs.ucr.edu/~gupta/teaching/152-20w/Project-Phase-II/syntax.html (from https://www.cs.ucr.edu/~gupta/teaching/152-20w/Project-Phase-II/lab02_parser.html)
+
+HTTrack Website Copier/3.49-2 mirror complete in 10 seconds : 43 links scanned, 40 files written (18248433 bytes overall) [18263240 bytes received at 1826324 bytes/sec], 10.7 requests per connection
+(2 errors, 0 warnings, 0 messages)

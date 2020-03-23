@@ -1,0 +1,20 @@
+Compile method:
+    1. Makefile
+        - make
+        - ./a.out filename
+        - make clean
+            - clean the scanner file and output file
+    2. manual 
+        - flex 861261944.lex
+        - gcc lex.yy.c
+        - ./a.out filename
+
+Clean files:
+	- make clean
+
+
+Troubleshoot:
+    - in MACOS, use: gcc 861261944.lex -ll    
+    - in Linux, use: gcc 861261944.lex -lfl
+
+ 
